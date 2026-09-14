@@ -1,5 +1,9 @@
 [build]
+  command = "true"
   publish = "."
+
+[build.processing.html]
+  pretty_urls = true
 
 [[redirects]]
   from = "/share"

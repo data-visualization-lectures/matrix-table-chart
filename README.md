@@ -31,7 +31,23 @@
 
 書き込みは保存済みプロジェクト必須 → Edge Function → `source_project_id` 単位の upsert。クライアントから `matrix_table_chart_shares` へ直接 INSERT しません。
 
-本番への migration / function deploy / DNS / Netlify は、対象・コマンド・ロールバックを出して承認を得てから行います。
+## デプロイ
+
+Netlify プロジェクト `matrix-table-chart` が GitHub `data-visualization-lectures/matrix-table-chart` の `main` を公開する。build step は無い。`netlify.toml` の publish は `.`。
+
+- 管理画面: https://app.netlify.com/projects/matrix-table-chart
+- Netlify 既定ホスト: https://matrix-table-chart.netlify.app/
+- 本番 URL: https://matrix-table-chart.dataviz.jp/
+
+カスタムドメインは DNS で次の CNAME を向ける。
+
+```
+matrix-table-chart.dataviz.jp  CNAME  matrix-table-chart.netlify.app.
+```
+
+ロールバックは Netlify の直前デプロイを restore する。サイト自体を消す場合は DNS の CNAME も削除する。
+
+シェアテーブルの本番 migration と `publish-matrix-table-chart-share` の function deploy は、対象・コマンド・ロールバックを出して承認を得てから行う。
 
 ## データ形式
 
