@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Matrix Table Chart</title>
+  <script>
+  (function () {
+    if (new URLSearchParams(location.search).get('embed') === '1') return;
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Failed to load: ' + src));
+        document.head.appendChild(s);
+      });
+    }
+    (async () => {
+      try {
+        await loadScript('https://id.data-viz-lectures.com/lib/supabase.v1.js');
+        await loadScript('https://id.data-viz-lectures.com/lib/dataviz-auth-client.v1.js');
+        await loadScript('https://id.data-viz-lectures.com/lib/dataviz-tool-header.v1.js');
+        await loadScript('https://id.data-viz-lectures.com/lib/dataviz-locale.v1.js');
+        await loadScript('https://id.data-viz-lectures.com/lib/dataviz-sample-picker.v1.js');
+      } catch (err) {
+        console.error('[matrix-table-chart] shared libs load failed:', err);
+      }
+    })();
+  })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+  (function () {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://id.data-viz-lectures.com/lib/dvz-editor-shell.v1.css';
+    link.onerror = () => {
+      const fallback = document.createElement('link');
+      fallback.rel = 'stylesheet';
+      fallback.href = 'css/dvz-common.css';
+      document.head.appendChild(fallback);
+    };
+    document.head.appendChild(link);
+  })();
+  </script>
+  <noscript><link rel="stylesheet" href="css/dvz-common.css"></noscript>
+  <link rel="stylesheet" href="https://id.data-viz-lectures.com/lib/dvz-setting-sidebar.v1.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased">
+  <dataviz-tool-header></dataviz-tool-header>
+
+  <div class="dvz-app flex" data-dvz-view="selector">
+    <div id="main-area" class="flex flex-1 flex-col overflow-y-auto bg-white">
+      <div id="chart-selector" class="flex flex-1 justify-center px-6 py-10 sm:px-8 lg:px-10">
+        <main class="dvz-catalog" aria-labelledby="dvz-catalog-title">
+          <header class="dvz-catalog__header">
+            <p class="dvz-catalog__kicker">Matrix Catalog</p>
+            <h1 id="dvz-catalog-title" class="dvz-catalog__title">Matrix Table Chart</h1>
+            <p class="dvz-catalog__lead">クロス集計表を、リストに変換せず可視化します。</p>
+          </header>
+          <div id="chart-selector-grid" class="dvz-catalog__grid"></div>
+        </main>
+      </div>
+
+      <main id="dvz-chart" class="relative flex flex-1 flex-col px-4 py-3" hidden aria-hidden="true">
+        <div id="chart-switcher" class="mb-2 flex items-center gap-2">
+          <button id="chart-back-btn" type="button" class="text-sm text-gray-500 hover:text-gray-700">&larr; Catalog</button>
+          <span id="chart-type-name" class="text-sm font-normal text-black empty:hidden"></span>
+        </div>
+        <h1 id="chart-title" class="mb-1 self-start text-lg font-semibold text-gray-900 empty:hidden"></h1>
+        <div id="chart-area" class="relative flex flex-1 items-center justify-center">
+          <div id="chart-container" class="chart-container w-full">
+            <div class="empty-state">クロス集計表の CSV を読み込んでください</div>
+          </div>
+        </div>
+        <div id="dvz-controls" class="mt-3 empty:hidden"></div>
+        <div id="chart-source" class="mt-2 self-start text-xs text-gray-400 empty:hidden"></div>
+      </main>
+
+      <div id="dvz-site-links" class="dvz-site-links py-3 text-center text-xs text-gray-400">
+        <a href="https://www.dataviz.jp/" target="_blank" rel="noopener" class="hover:text-gray-600">dataviz.jp</a>
+      </div>
+    </div>
+
+    <aside id="dvz-sidebar" class="dvz-sidebar dvz-setting-sidebar" data-dvz-setting-sidebar hidden aria-hidden="true">
+      <div class="border-b border-gray-200">
+        <div class="dvz-setting-sidebar__select-wrap">
+          <div class="grid grid-cols-1">
+            <select id="sidebar-tab-select" data-dvz-setting-tab-select data-i18n-aria="tabSelect" aria-label="タブを選択" class="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-2 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-gray-600">
+              <option value="tab-data" selected data-i18n="tabData">データ</option>
+              <option value="tab-mapping" data-i18n="tabMapping">マッピング</option>
+              <option value="tab-style" data-i18n="tabStyle">スタイル</option>
+              <option value="tab-annotate" data-i18n="tabAnnotate">注釈</option>
+              <option value="tab-export" data-i18n="tabExport">出力</option>
+            </select>
+            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end fill-gray-500"><path d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" fill-rule="evenodd"/></svg>
+          </div>
+        </div>
+        <nav class="dvz-setting-sidebar__tabs" data-dvz-setting-tabs data-i18n-aria="tabList" aria-label="設定">
+          <button type="button" data-dvz-setting-tab data-tab="tab-data" data-i18n="tabData" class="sidebar-tab dvz-setting-sidebar__tab is-active flex-1 px-4 py-3 text-center text-sm font-medium">データ</button>
+          <button type="button" data-dvz-setting-tab data-tab="tab-mapping" data-i18n="tabMapping" class="sidebar-tab dvz-setting-sidebar__tab flex-1 px-4 py-3 text-center text-sm font-medium">マッピング</button>
+          <button type="button" data-dvz-setting-tab data-tab="tab-style" data-i18n="tabStyle" class="sidebar-tab dvz-setting-sidebar__tab flex-1 px-4 py-3 text-center text-sm font-medium">スタイル</button>
+          <button type="button" data-dvz-setting-tab data-tab="tab-annotate" data-i18n="tabAnnotate" class="sidebar-tab dvz-setting-sidebar__tab flex-1 px-4 py-3 text-center text-sm font-medium">注釈</button>
+          <button type="button" data-dvz-setting-tab data-tab="tab-export" data-i18n="tabExport" class="sidebar-tab dvz-setting-sidebar__tab flex-1 px-4 py-3 text-center text-sm font-medium">出力</button>
+        </nav>
+      </div>
+
+      <div class="dvz-setting-sidebar__panels flex flex-1 flex-col overflow-hidden" data-dvz-setting-panels>
+        <div id="tab-data" class="sidebar-panel dvz-setting-sidebar__panel common-data-tab flex flex-1 flex-col overflow-hidden" data-dvz-setting-panel>
+          <div class="flex-1 overflow-y-auto">
+            <section class="border-b border-gray-100 px-5 py-4">
+              <h3 class="mb-3 text-[11px] font-bold uppercase tracking-wide text-gray-400" data-i18n="upload">アップロード</h3>
+              <div id="dvz-dropzone" class="dvz-dropzone rounded-md border border-dashed border-gray-300 bg-white px-4 py-8 text-center text-sm text-gray-500">
+                <span data-i18n="dropHere">CSV / TSV / JSON をドロップ</span>
+                <span class="mt-1 block text-xs" data-i18n="orClick">またはクリックして選択</span>
+              </div>
+              <input id="dvz-file-input" type="file" accept=".csv,.tsv,.json,text/csv,text/tab-separated-values,application/json" hidden>
+              <p class="mt-3 text-xs leading-5 text-gray-400" data-i18n="dataFormatHint">先頭列が行ラベル、残りが列ラベルのクロス集計表を読みます。リスト形式への変換は不要です。</p>
+            </section>
+            <section class="border-b border-gray-100 px-5 py-4">
+              <h3 class="mb-2 text-[11px] font-bold uppercase tracking-wide text-gray-400" data-i18n="loadedData">読込済みデータ</h3>
+              <div id="data-meta-content" class="text-sm text-gray-600">データ未読込</div>
+            </section>
+            <section class="px-5 py-4">
+              <h3 class="mb-2 text-[11px] font-bold uppercase tracking-wide text-gray-400" data-i18n="dataPreviewTitle">データプレビュー（先頭5行）</h3>
+              <div id="data-preview-content" class="overflow-auto">プレビューできるデータがありません</div>
+            </section>
+          </div>
+        </div>
+
+        <div id="tab-mapping" class="sidebar-panel dvz-setting-sidebar__panel hidden flex-1 overflow-y-auto" data-dvz-setting-panel>
+          <div id="mapping-fields">
+            <section class="border-b border-gray-100 px-5 py-4">
+              <label for="map-row-key" class="mb-2 block text-[11px] font-bold uppercase tracking-wide text-gray-400" data-i18n="mapRowLabels">行ラベル</label>
+              <select id="map-row-key" class="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm"></select>
+            </section>
+            <section class="border-b border-gray-100 px-5 py-4">
+              <p class="mb-2 text-[11px] font-bold uppercase tracking-wide text-gray-400" data-i18n="mapValueColumns">値の列</p>
+              <div id="map-value-columns" class="flex flex-col gap-2 text-sm"></div>
+            </section>
+            <section class="border-b border-gray-100 px-5 py-4">
+              <label for="map-orientation" class="mb-2 block text-[11px] font-bold uppercase tracking-wide text-gray-400" data-i18n="mapOrientation">向き</label>
+              <select id="map-orientation" class="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm">
+                <option value="rows-as-groups" data-i18n="mapRowsAsGroups">行をグループに</option>
+                <option value="cols-as-groups" data-i18n="mapColsAsGroups">列をグループに</option>
+              </select>
+            </section>
+            <section class="px-5 py-4">
+              <label class="dvz-check text-sm"><input id="map-exclude-totals" type="checkbox" checked><span data-i18n="mapExcludeTotals">合計行・列を除外</span></label>
+              <p id="square-warning" class="mt-3 text-xs leading-5 text-amber-700" hidden data-i18n="squareWarning">このチャートは行ラベルと列ヘッダが同じ正方形行列が必要です。ヒートマップを使うか、ラベルを揃えてください。</p>
+            </section>
+          </div>
+        </div>
+
+        <div id="tab-style" class="sidebar-panel dvz-setting-sidebar__panel hidden flex-1 overflow-y-auto" data-dvz-setting-panel>
+          <div id="style-fields">
+            <section class="border-b border-gray-100 px-5 py-4">
+              <label for="style-color-scheme" class="mb-2 block text-[11px] font-bold uppercase tracking-wide text-gray-400" data-i18n="styleColor">配色</label>
+              <select id="style-color-scheme" class="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm">
+                <option value="blues">Blues</option>
+                <option value="oranges">Oranges</option>
+                <option value="greens">Greens</option>
+                <option value="purples">Purples</option>
+                <option value="viridis">Viridis</option>
+                <option value="inferno">Inferno</option>
+                <option value="rdylbu">RdYlBu</option>
+                <option value="tableau">Tableau</option>
+              </select>
+            </section>
+            <section class="border-b border-gray-100 px-5 py-4">
+              <label class="dvz-check text-sm"><input id="style-show-values" type="checkbox"><span data-i18n="styleShowValues">値を表示</span></label>
+            </section>
+            <section class="border-b border-gray-100 px-5 py-4" data-chart-style="stacked-bar">
+              <label for="style-stacked-mode" class="mb-2 block text-[11px] font-bold uppercase tracking-wide text-gray-400" data-i18n="styleStackedMode">積み上げ方式</label>
+              <select id="style-stacked-mode" class="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm">
+                <option value="percent" data-i18n="styleStackedPercent">100%</option>
+                <option value="absolute" data-i18n="styleStackedAbsolute">実数</option>
+              </select>
+            </section>
+            <section class="border-b border-gray-100 px-5 py-4" data-chart-style="heatmap">
+              <label class="dvz-check text-sm"><input id="style-heatmap-diverging" type="checkbox"><span data-i18n="styleDiverging">発散カラー</span></label>
+            </section>
+            <section class="px-5 py-4" data-chart-style="scatterplot-matrix">
+              <label for="style-splom-max" class="mb-2 block text-[11px] font-bold uppercase tracking-wide text-gray-400" data-i18n="styleSplomAxes">SPLOM軸</label>
+              <input id="style-splom-max" type="number" min="2" max="8" value="6" class="w-full rounded border border-gray-300 px-3 py-2 text-sm">
+            </section>
+          </div>
+        </div>
+
+        <div id="tab-annotate" class="sidebar-panel dvz-setting-sidebar__panel hidden flex-1 flex-col overflow-hidden" data-dvz-setting-panel>
+          <div class="flex-1 overflow-y-auto">
+            <section class="border-b border-gray-100 px-5 py-4">
+              <label for="annotate-title" class="mb-2 block text-[11px] font-bold uppercase tracking-wide text-gray-400" data-i18n="annotateTitle">タイトル</label>
+              <input type="text" id="annotate-title" class="w-full rounded border border-gray-300 px-3 py-2 text-sm" data-i18n="annotateTitlePlaceholder" placeholder="チャートタイトル">
+            </section>
+            <section class="border-b border-gray-100 px-5 py-4">
+              <label for="annotate-source" class="mb-2 block text-[11px] font-bold uppercase tracking-wide text-gray-400" data-i18n="annotateSource">出典</label>
+              <input type="text" id="annotate-source" class="mb-3 w-full rounded border border-gray-300 px-3 py-2 text-sm" data-i18n="annotateSourcePlaceholder" placeholder="データソース名">
+              <label for="annotate-source-url" class="mb-2 block text-[11px] font-bold uppercase tracking-wide text-gray-400" data-i18n="annotateSourceUrl">出典URL</label>
+              <input type="url" id="annotate-source-url" class="w-full rounded border border-gray-300 px-3 py-2 text-sm" placeholder="https://...">
+            </section>
+            <section class="px-5 py-4">
+              <label for="legend-position" class="mb-2 block text-[11px] font-bold uppercase tracking-wide text-gray-400" data-i18n="annotateLegend">凡例</label>
+              <select id="legend-position" class="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm">
+                <option value="none" data-i18n="legendNone">なし</option>
+                <option value="top-right" selected data-i18n="legendTopRight">右上</option>
+                <option value="bottom-right" data-i18n="legendBottomRight">右下</option>
+              </select>
+            </section>
+          </div>
+          <div class="shrink-0 border-t border-gray-200 px-5 py-4">
+            <button id="annotate-apply-btn" class="w-full rounded-md bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-gray-700" data-i18n="apply">適用</button>
+          </div>
+        </div>
+
+        <div id="tab-export" class="sidebar-panel dvz-setting-sidebar__panel common-export-tab hidden flex-1 overflow-y-auto" data-dvz-setting-panel>
+          <section class="px-5 py-4">
+            <h3 class="mb-3 text-[11px] font-bold uppercase tracking-wide text-gray-400" data-i18n="exportImage">画像</h3>
+            <div class="flex flex-col gap-3">
+              <button id="export-svg-btn" class="flex w-full items-center justify-center gap-2 rounded-md bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">SVG</button>
+              <button id="export-png-btn" class="flex w-full items-center justify-center gap-2 rounded-md bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">PNG (2x)</button>
+            </div>
+          </section>
+          <section class="border-t border-gray-100 px-5 py-4">
+            <h3 class="mb-3 text-[11px] font-bold uppercase tracking-wide text-gray-400" data-i18n="exportData">データ</h3>
+            <div class="flex flex-col gap-3">
+              <button id="export-csv-btn" class="flex w-full items-center justify-center gap-2 rounded-md bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">CSV</button>
+              <button id="export-json-btn" class="flex w-full items-center justify-center gap-2 rounded-md bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">JSON</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div id="tooltip" class="dvz-tooltip" style="display:none;"></div>
+
+  <script src="https://id.data-viz-lectures.com/lib/dvz-editor-shell.v1.js"></script>
+  <script src="https://id.data-viz-lectures.com/lib/dvz-setting-sidebar.v1.js"></script>
+  <script src="https://id.data-viz-lectures.com/lib/settings-compat.v1.js"></script>
+  <script src="js/matrix-model.js?v=2"></script>
+  <script src="js/settings-spec.js"></script>
+  <script src="js/dvz-helpers.js?v=4"></script>
+  <script src="js/chart-registry.js?v=3"></script>
+  <script src="js/modules/heatmap.js?v=3"></script>
+  <script src="js/modules/mosaic.js"></script>
+  <script src="js/modules/stacked-bar.js"></script>
+  <script src="js/modules/parallel-coordinates.js?v=2"></script>
+  <script src="js/modules/scatterplot-matrix.js"></script>
+  <script src="js/modules/chord.js"></script>
+  <script src="js/modules/adjacency-matrix.js?v=2"></script>
+  <script src="js/core/runtime.js?v=8"></script>
+  <script src="js/app.js?v=2"></script>
+</body>
+</html>

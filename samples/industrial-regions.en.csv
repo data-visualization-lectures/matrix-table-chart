@@ -1,0 +1,10 @@
+region,machinery,metals,chemicals,food,textiles,other
+Keihin,38,12,10,8,5,27
+Hanshin,30,18,14,9,6,23
+Chukyo,42,11,8,7,4,28
+Setouchi,22,16,18,12,5,27
+Keiyo,28,20,22,8,3,19
+Tokai,35,10,9,14,6,26
+Hokuriku,18,8,7,16,22,29
+Kitakyushu,24,26,12,10,4,24
+Other regions,20,12,10,18,8,32

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Matrix Table Chart</title>
+<meta property="og:type" content="website">
+<meta property="og:title" content="Matrix Table Chart">
+<meta property="og:image" content="">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Matrix Table Chart">
+<meta name="twitter:image" content="">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function () {
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'https://id.data-viz-lectures.com/lib/dvz-share-shell.v1.css';
+  link.onerror = () => {
+    const fallback = document.createElement('link');
+    fallback.rel = 'stylesheet';
+    fallback.href = 'css/dvz-share-shell.v1.css';
+    document.head.appendChild(fallback);
+  };
+  document.head.appendChild(link);
+})();
+</script>
+<noscript><link rel="stylesheet" href="css/dvz-share-shell.v1.css"></noscript>
+<link rel="stylesheet" href="css/style.css">
+<style>
+body.dvz-share-shell--document {
+  --dvz-share-chart-height: clamp(320px, 62vh, 760px);
+}
+#chart-container { position: relative; min-height: 320px; }
+#chart-container svg { width: 100%; height: 100%; display: block; }
+</style>
+</head>
+<body class="dvz-share-shell--document">
+<div class="dvz-app">
+  <div id="dvz-loading">Loading...</div>
+  <div id="dvz-error"></div>
+  <div id="dvz-content">
+    <h1 id="chart-title"></h1>
+    <div id="chart-source"></div>
+    <div id="chart-container"></div>
+    <div id="dvz-controls"></div>
+  </div>
+  <div class="dvz-cta">
+    <a href="https://matrix-table-chart.dataviz.jp/">自分もチャートを作る</a>
+  </div>
+  <div class="dvz-site-links">
+    <a href="https://www.dataviz.jp/matrix-table-chart/">Matrix Table Chart</a>
+    <span>|</span>
+    <a href="https://www.dataviz.jp/">dataviz.jp</a>
+  </div>
+</div>
+<div id="tooltip" class="dvz-tooltip" style="display:none;"></div>
+<script src="https://id.data-viz-lectures.com/lib/settings-compat.v1.js"></script>
+<script src="js/matrix-model.js"></script>
+<script src="js/settings-spec.js"></script>
+<script src="js/dvz-helpers.js"></script>
+<script src="js/chart-registry.js?v=3"></script>
+<script src="js/modules/heatmap.js"></script>
+<script src="js/modules/mosaic.js"></script>
+<script src="js/modules/stacked-bar.js"></script>
+<script src="js/modules/parallel-coordinates.js?v=2"></script>
+<script src="js/modules/scatterplot-matrix.js"></script>
+<script src="js/modules/chord.js"></script>
+<script src="js/modules/adjacency-matrix.js"></script>
+<script src="js/core/routing.js"></script>
+<script>
+(function () {
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Failed to load: ' + src));
+      document.body.appendChild(s);
+    });
+  }
+  (async () => {
+    try {
+      await loadScript('https://id.data-viz-lectures.com/lib/dvz-share-shell.v1.js');
+    } catch (_error) {
+      await loadScript('js/dvz-share-shell.v1.js');
+    }
+    if (!window.DVZShareShell) await loadScript('js/dvz-share-shell.v1.js');
+    await loadScript('js/share-runtime.js');
+  })().catch((error) => {
+    console.error('[matrix-table-chart] share libs load failed:', error);
+  });
+})();
+</script>
+</body>
+</html>

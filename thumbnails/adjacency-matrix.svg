@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" fill="none">
+  <rect width="320" height="180" fill="#fff"/>
+  <g transform="translate(86,18)">
+    <rect width="148" height="148" fill="#eee"/>
+    <rect x="0" y="0" width="36" height="36" fill="#1f77b4" fill-opacity=".9"/>
+    <rect x="37" y="0" width="36" height="36" fill="#1f77b4" fill-opacity=".55"/>
+    <rect x="74" y="0" width="36" height="36" fill="#000" fill-opacity=".18"/>
+    <rect x="0" y="37" width="36" height="36" fill="#1f77b4" fill-opacity=".55"/>
+    <rect x="37" y="37" width="36" height="36" fill="#1f77b4" fill-opacity=".95"/>
+    <rect x="74" y="37" width="36" height="36" fill="#000" fill-opacity=".12"/>
+    <rect x="111" y="37" width="36" height="36" fill="#000" fill-opacity=".22"/>
+    <rect x="74" y="74" width="36" height="36" fill="#ff7f0e" fill-opacity=".9"/>
+    <rect x="111" y="74" width="36" height="36" fill="#ff7f0e" fill-opacity=".5"/>
+    <rect x="37" y="74" width="36" height="36" fill="#000" fill-opacity=".15"/>
+    <rect x="74" y="111" width="36" height="36" fill="#ff7f0e" fill-opacity=".5"/>
+    <rect x="111" y="111" width="36" height="36" fill="#ff7f0e" fill-opacity=".95"/>
+    <rect x="0" y="111" width="36" height="36" fill="#000" fill-opacity=".1"/>
+    <g stroke="#fff" stroke-width="1" shape-rendering="crispEdges">
+      <line x1="0" y1="37" x2="148" y2="37"/>
+      <line x1="0" y1="74" x2="148" y2="74"/>
+      <line x1="0" y1="111" x2="148" y2="111"/>
+      <line x1="37" y1="0" x2="37" y2="148"/>
+      <line x1="74" y1="0" x2="74" y2="148"/>
+      <line x1="111" y1="0" x2="111" y2="148"/>
+    </g>
+  </g>
+</svg>

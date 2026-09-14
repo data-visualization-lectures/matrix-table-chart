@@ -1,0 +1,5 @@
+origin,Tokyo,Osaka,Nagoya,Fukuoka
+Tokyo,0,120,80,40
+Osaka,90,0,50,30
+Nagoya,70,45,0,20
+Fukuoka,35,25,15,0
