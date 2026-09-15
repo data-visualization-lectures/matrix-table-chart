@@ -70,6 +70,7 @@
     }
 
     init() {
+      root.MatrixSampleCatalog?.installPickerPatch();
       H().dvzInitGA(this.config.gaId);
       this.mountShell();
       this.mountSidebar();
@@ -324,7 +325,7 @@
       if (!header?.setConfig) return;
       const compact = window.matchMedia('(max-width: 640px)').matches;
       header.setConfig({
-        logo: { type: 'text', text: 'Matrix' },
+        logo: { type: 'text', text: this.config.title },
         buttons: this.currentChartId ? [
           {
             label: compact ? '読込' : (this.lang === 'en' ? 'Load' : 'プロジェクトの読込'),
@@ -357,9 +358,21 @@
       const header = this.header;
       if (!header?.setSampleConfig || !this.currentChartId) return;
       header.setSampleConfig({
-        toolId: `${this.config.appName}/${this.currentChartId}`,
+        toolId: this.config.appName,
+        chartKey: this.currentChartId,
         onSampleSelect: async (detail) => {
-          if (detail?.url) await this.loadFromUrl(detail.url, detail.format, detail.name, { sampleDetail: detail });
+          if (!detail?.url) return;
+          const lang = this.lang === 'en' ? 'en' : 'ja';
+          await this.loadFromUrl(detail.url, detail.format, detail.name, {
+            sampleDetail: detail,
+            annotation: {
+              title: '',
+              source: lang === 'en'
+                ? (detail.sourceEn || detail.source || '')
+                : (detail.source || detail.sourceEn || ''),
+              sourceUrl: detail.sourceUrl || '',
+            },
+          });
         },
       });
     }
