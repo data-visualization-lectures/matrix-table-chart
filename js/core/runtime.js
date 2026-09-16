@@ -24,29 +24,6 @@
       en: 'samples/les-miserables.en.csv',
     },
   };
-  const AD_SPEND_SOURCE_URL = 'https://www.dentsu.co.jp/knowledge/ad_cost/2025/koukokuhi.html';
-  const SAMPLE_META = {
-    'ad-spend-by-industry': {
-      ja: {
-        source: '電通「日本の広告費」2025年 業種別広告費（マスコミ四媒体別、衛星メディア関連を除く）',
-        sourceUrl: AD_SPEND_SOURCE_URL,
-      },
-      en: {
-        source: 'Dentsu, Advertising Expenditures in Japan 2025 (four mass media, excluding satellite media)',
-        sourceUrl: AD_SPEND_SOURCE_URL,
-      },
-    },
-    'les-miserables': {
-      ja: {
-        source: 'Donald Knuth, The Stanford GraphBase（Les Misérables 登場人物の章共起）',
-        sourceUrl: 'https://bost.ocks.org/mike/miserables/',
-      },
-      en: {
-        source: 'Donald Knuth, The Stanford GraphBase (Les Misérables character co-occurrence)',
-        sourceUrl: 'https://bost.ocks.org/mike/miserables/',
-      },
-    },
-  };
   const SQUARE_CHARTS = new Set(['chord', 'adjacency-matrix']);
 
   class MatrixTableApp {
@@ -160,7 +137,10 @@
       document.getElementById('export-json-btn')?.addEventListener('click', () => this.exportJson());
 
       H().dvzInitFileUpload((parsed) => {
-        this.applyRows(parsed.data, parsed.filename, { source: 'upload' });
+        this.applyRows(parsed.data, parsed.filename, {
+          source: 'upload',
+          annotation: { title: '', source: '', sourceUrl: '' },
+        });
       });
 
       const mapping = document.getElementById('tab-mapping');
@@ -408,11 +388,9 @@
     }
 
     localSampleAnnotation(sampleId) {
-      const meta = SAMPLE_META[sampleId];
-      if (!meta) return undefined;
-      const rec = this.lang === 'en' ? (meta.en || meta.ja) : (meta.ja || meta.en);
-      if (!rec) return undefined;
-      return { title: '', source: rec.source || '', sourceUrl: rec.sourceUrl || '' };
+      const fromCatalog = root.MatrixSampleCatalog?.annotationFor?.(sampleId, this.lang);
+      if (fromCatalog) return fromCatalog;
+      return { title: '', source: '', sourceUrl: '' };
     }
 
     parseCompatibleToolToken(token) {
@@ -443,7 +421,10 @@
           });
         });
         if (!entries.length) return false;
-        const first = entries[Math.floor(Math.random() * entries.length)];
+        const wanted = this.getRegistryEntry(this.currentChartId)?.sample;
+        const first = entries.find((entry) => (
+          (entry.id || '').endsWith(wanted) || (entry.fileUrl || '').includes(`/${wanted}.`)
+        )) || entries[0];
         const url = this.pickSampleUrl(first);
         const name = this.lang === 'en' ? (first.nameEn || first.name) : first.name;
         if (!url) return false;
@@ -506,10 +487,11 @@
         .filter((column) => !root.MatrixModel.isTotalLabel(column));
       const keepExisting = (this.settings.valueColumns || []).filter((column) => inferred.includes(column));
       this.settings.valueColumns = keepExisting.length ? keepExisting : inferred;
-      if (meta.annotation) {
-        this.settings.annotateTitle = meta.annotation.title || '';
-        this.settings.annotateSource = meta.annotation.source || '';
-        this.settings.annotateSourceUrl = meta.annotation.sourceUrl || '';
+      if (Object.prototype.hasOwnProperty.call(meta, 'annotation')) {
+        const annotation = meta.annotation || {};
+        this.settings.annotateTitle = annotation.title || '';
+        this.settings.annotateSource = annotation.source || '';
+        this.settings.annotateSourceUrl = annotation.sourceUrl || '';
       }
       try {
         this.syncDataPanel();

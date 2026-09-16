@@ -160,12 +160,13 @@
 
   function annotationFor(sampleId, lang) {
     const entry = SAMPLE_ENTRIES.find((item) => item.sampleId === sampleId);
-    if (!entry) return undefined;
     const en = lang === 'en';
     return {
       title: '',
-      source: en ? (entry.sourceEn || entry.source || '') : (entry.source || entry.sourceEn || ''),
-      sourceUrl: entry.sourceUrl || '',
+      source: entry
+        ? (en ? (entry.sourceEn || entry.source || '') : (entry.source || entry.sourceEn || ''))
+        : '',
+      sourceUrl: entry?.sourceUrl || '',
     };
   }
 
