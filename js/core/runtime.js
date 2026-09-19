@@ -62,6 +62,22 @@
       this.setupHeader();
       this.syncView('selector');
 
+      window.addEventListener('popstate', () => {
+        const params = new URLSearchParams(location.search);
+        const projectId = params.get('projectId');
+        const chart = params.get('chart');
+        if (projectId) {
+          this.projectLoadStarted = true;
+          this.header?.loadProject?.(projectId);
+          return;
+        }
+        if (chart && this.getRegistryEntry(chart)) {
+          void this.selectChart(chart, { updateUrl: false });
+          return;
+        }
+        this.showSelector({ updateUrl: false });
+      });
+
       const params = new URLSearchParams(location.search);
       const projectId = params.get('projectId');
       const chart = params.get('chart');
@@ -114,7 +130,7 @@
     }
 
     bindStaticUi() {
-      document.getElementById('chart-back-btn')?.addEventListener('click', () => this.showSelector());
+      document.getElementById('chart-back-btn')?.addEventListener('click', () => this.goBackToSelector());
       document.getElementById('annotate-apply-btn')?.addEventListener('click', () => {
         this.readAnnotateFromDom();
         this.renderChart(false);
@@ -153,9 +169,45 @@
       });
     }
 
+    applyCatalogBackButton() {
+      const backBtn = document.getElementById('chart-back-btn');
+      if (!backBtn) return;
+      const isEn = this.lang === 'en';
+      backBtn.textContent = isEn ? '← Catalog' : '← 一覧';
+      backBtn.setAttribute('aria-label', isEn ? 'Back to catalog' : 'テンプレート一覧に戻る');
+    }
+
+    hasUnsavedProjectChanges() {
+      const currentPayload = this.getWrappedProjectData();
+      if (!currentPayload) return false;
+      let currentSerialized = '';
+      try {
+        currentSerialized = JSON.stringify(currentPayload);
+      } catch (_error) {
+        return true;
+      }
+      if (!currentSerialized) return true;
+      if (!this.currentProjectId) return true;
+      return currentSerialized !== this.lastSavedSerialized;
+    }
+
+    confirmLeaveChart() {
+      if (!this.hasUnsavedProjectChanges()) return true;
+      const message = this.lang === 'en'
+        ? 'You have unsaved changes. Return to the catalog?'
+        : '未保存の変更があります。一覧に戻りますか？';
+      return window.confirm(message);
+    }
+
+    goBackToSelector() {
+      if (!this.confirmLeaveChart()) return;
+      this.showSelector({ updateUrl: true, replace: true });
+    }
+
     renderSelector() {
       const grid = document.getElementById('chart-selector-grid');
       if (!grid) return;
+      this.applyCatalogBackButton();
       grid.innerHTML = '';
       (root.CHART_REGISTRY || []).forEach((entry, index) => {
         const card = document.createElement('a');
@@ -207,13 +259,20 @@
       document.body.dataset.dvzToolHeader = isChart ? 'visible' : 'hidden';
     }
 
-    showSelector() {
+    showSelector({ updateUrl = true, replace = true } = {}) {
       this.currentChartId = null;
       this.syncView('selector');
       this.applyHeaderButtons();
+      if (!updateUrl) return;
       const url = new URL(location.href);
       url.searchParams.delete('chart');
-      history.replaceState({}, '', url);
+      url.searchParams.delete('projectId');
+      const state = { dvzRoute: 'selector' };
+      if (replace) {
+        history.replaceState(state, '', url);
+      } else {
+        history.pushState(state, '', url);
+      }
     }
 
     async selectChart(chartId, { updateUrl = true } = {}) {
@@ -227,8 +286,9 @@
       this.updateStyleVisibility();
       if (updateUrl) {
         const url = new URL(location.href);
+        url.searchParams.delete('projectId');
         url.searchParams.set('chart', chartId);
-        history.replaceState({}, '', url);
+        history.pushState({ dvzRoute: 'chart', chartId }, '', url);
       }
       this.setupSampleConfig();
       if (!this.shouldSkipAutoSampleLoad() && !this.hasStickyData()) {
