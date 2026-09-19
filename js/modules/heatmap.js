@@ -21,10 +21,10 @@
     const min = d3.min(values) ?? 0;
     const max = d3.max(values) ?? 1;
     const diverging = settings.heatmapDiverging || min < 0;
-    const interpolator = H().colorInterpolator(settings.colorScheme, diverging);
+    const interpolator = H().colorInterpolator(settings.colorScheme);
     const useLog = !diverging && min >= 0 && max > 0 && max > Math.max(min, 1) * 8;
     const color = diverging
-      ? d3.scaleDiverging(interpolator).domain([min, 0, max])
+      ? d3.scaleDiverging(interpolator).domain([Math.min(min, 0), 0, Math.max(max, 0)])
       : d3.scaleSequential(interpolator).domain(useLog ? [0, Math.log1p(max)] : [min, max]);
     const colorOf = (value) => (useLog ? color(Math.log1p(value || 0)) : color(value));
     const cellW = Math.max(1, x.bandwidth() - gap);

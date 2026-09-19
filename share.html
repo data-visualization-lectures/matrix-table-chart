@@ -64,8 +64,8 @@ body.dvz-share-shell--document {
 <script src="js/modules/heatmap.js"></script>
 <script src="js/modules/mosaic.js"></script>
 <script src="js/modules/stacked-bar.js"></script>
-<script src="js/modules/parallel-coordinates.js?v=2"></script>
-<script src="js/modules/scatterplot-matrix.js"></script>
+<script src="js/modules/parallel-coordinates.js?v=5"></script>
+<script src="js/modules/scatterplot-matrix.js?v=4"></script>
 <script src="js/modules/chord.js"></script>
 <script src="js/modules/adjacency-matrix.js"></script>
 <script src="js/core/routing.js"></script>
@@ -87,7 +87,7 @@ body.dvz-share-shell--document {
       await loadScript('js/dvz-share-shell.v1.js');
     }
     if (!window.DVZShareShell) await loadScript('js/dvz-share-shell.v1.js');
-    await loadScript('js/share-runtime.js');
+    await loadScript('js/share-runtime.js?v=3');
   })().catch((error) => {
     console.error('[matrix-table-chart] share libs load failed:', error);
   });

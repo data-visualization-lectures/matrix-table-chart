@@ -100,9 +100,32 @@
     const g = svg.append('g').attr('transform', `translate(${tx},${ty})`);
     const x = d3.scaleBand().domain(orders[orderKey]).range([0, size]);
     const band = x.bandwidth();
+    const zMax = d3.max(cells, (row) => d3.max(row, (cell) => cell.z)) || 1;
     const opacity = d3.scaleLinear().domain([0, 4]).clamp(true);
-    const color = d3.scaleOrdinal(d3.schemeCategory10);
     const hasGroups = nodes.some((node) => node.group);
+    const groupKeys = [];
+    const seenGroups = new Set();
+    nodes.forEach((node) => {
+      const key = String(node.group);
+      if (seenGroups.has(key)) return;
+      seenGroups.add(key);
+      groupKeys.push(node.group);
+    });
+    const scheme = settings.colorScheme || 'tableau';
+    const interpolator = H().colorInterpolator(scheme);
+    const groupCount = groupKeys.length || 1;
+    const groupColors = scheme === 'tableau'
+      ? d3.range(groupCount).map((i) => d3.schemeTableau10[i % 10])
+      : d3.range(groupCount).map((i) => interpolator(groupCount === 1 ? 0.65 : 0.2 + (0.7 * i) / Math.max(groupCount - 1, 1)));
+    const groupColor = d3.scaleOrdinal().domain(groupKeys).range(groupColors);
+    const sequential = d3.scaleSequential(interpolator).domain([0, zMax]);
+    const fillOf = (d) => {
+      if (hasGroups) {
+        if (nodes[d.x].group === nodes[d.y].group) return groupColor(nodes[d.x].group);
+        return '#000';
+      }
+      return sequential(d.z);
+    };
 
     g.append('rect')
       .attr('class', 'background')
@@ -117,17 +140,14 @@
       .attr('transform', (_, i) => `translate(0,${x(i)})`);
 
     rows.selectAll('rect.cell')
-      .data((row) => row.filter((cell) => cell.z))
+      .data((row) => row.filter((item) => item.z))
       .join('rect')
       .attr('class', 'cell')
       .attr('x', (d) => x(d.x))
       .attr('width', band)
       .attr('height', band)
-      .attr('fill', (d) => {
-        if (hasGroups && nodes[d.x].group === nodes[d.y].group) return color(nodes[d.x].group);
-        return '#000';
-      })
-      .attr('fill-opacity', (d) => opacity(d.z))
+      .attr('fill', fillOf)
+      .attr('fill-opacity', (d) => (hasGroups ? opacity(d.z) : 1))
       .on('mousemove', (event, d) => {
         highlight(d);
         H().showTooltip(

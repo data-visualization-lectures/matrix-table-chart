@@ -68,7 +68,10 @@
         const brushG = cellG.append('g').attr('class', 'splom-brush');
         const brush = d3.brush()
           .extent([[0, 0], [cell, cell]])
-          .on('brush end', applySplomBrush);
+          .on('brush end', () => {
+            applySplomBrush();
+            syncResetControl();
+          });
         brushG.call(brush);
         splomBrushes.push({ group: brushG, brush, xKey, yKey, xScale: scales[xKey], yScale: scales[yKey] });
 
@@ -93,20 +96,37 @@
     });
   }
 
+  function hasActiveBrush() {
+    return splomBrushes.some(({ group }) => !!d3.brushSelection(group.node()));
+  }
+
+  function syncResetControl() {
+    const btn = document.getElementById('splom-reset');
+    if (!btn) return;
+    const show = hasActiveBrush();
+    btn.style.visibility = show ? 'visible' : 'hidden';
+    btn.style.pointerEvents = show ? 'auto' : 'none';
+  }
+
   function resetBrushes() {
     splomBrushes.forEach(({ group, brush }) => {
       group.call(brush.move, null);
     });
     d3.selectAll('#chart-container circle.splom-dot').classed('is-faded', false);
+    syncResetControl();
   }
 
   root.MatrixChartModules = root.MatrixChartModules || {};
   root.MatrixChartModules['scatterplot-matrix'] = {
     id: 'scatterplot-matrix',
     render: renderSplom,
-    controlsHTML: '<button type="button" id="splom-reset" class="dvz-control-btn">Reset</button>',
+    controlsHTML(lang) {
+      const label = lang === 'en' ? 'Reset' : 'リセット';
+      return `<button type="button" id="splom-reset" class="dvz-control-btn">${label}</button>`;
+    },
     bindControls() {
       document.getElementById('splom-reset')?.addEventListener('click', resetBrushes);
+      syncResetControl();
     },
     reset: resetBrushes,
   };

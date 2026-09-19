@@ -82,7 +82,10 @@
     axisG.each(function (axisKey) {
       const brush = d3.brushY()
         .extent([[-12, 0], [12, innerHeight]])
-        .on('brush end', () => applyBrush(g, paths, y));
+        .on('brush end', () => {
+          applyBrush(g, paths, y);
+          syncResetControl();
+        });
       d3.select(this).call(brush);
       brushes.push({ axisKey, brush, node: this });
     });
@@ -117,20 +120,37 @@
     });
   }
 
+  function hasActiveBrush() {
+    return brushes.some(({ node }) => !!d3.brushSelection(node));
+  }
+
+  function syncResetControl() {
+    const btn = document.getElementById('pcp-reset');
+    if (!btn) return;
+    const show = hasActiveBrush();
+    btn.style.visibility = show ? 'visible' : 'hidden';
+    btn.style.pointerEvents = show ? 'auto' : 'none';
+  }
+
   function resetBrushes() {
     brushes.forEach(({ node, brush }) => {
       d3.select(node).call(brush.move, null);
     });
     d3.selectAll('#chart-container path.series').classed('is-faded', false);
+    syncResetControl();
   }
 
   root.MatrixChartModules = root.MatrixChartModules || {};
   root.MatrixChartModules['parallel-coordinates'] = {
     id: 'parallel-coordinates',
     render: renderParallelCoordinates,
-    controlsHTML: '<button type="button" id="pcp-reset" class="dvz-control-btn">Reset</button>',
+    controlsHTML(lang) {
+      const label = lang === 'en' ? 'Reset' : 'リセット';
+      return `<button type="button" id="pcp-reset" class="dvz-control-btn">${label}</button>`;
+    },
     bindControls() {
       document.getElementById('pcp-reset')?.addEventListener('click', resetBrushes);
+      syncResetControl();
     },
     reset: resetBrushes,
   };

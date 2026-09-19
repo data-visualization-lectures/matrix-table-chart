@@ -509,7 +509,7 @@
       this.matrix = root.MatrixModel.buildMatrix(this.rawData, {
         rowKeyColumn: this.settings.rowKeyColumn,
         valueColumns: this.settings.valueColumns,
-        orientation: this.settings.orientation,
+        orientation: SQUARE_CHARTS.has(this.currentChartId) ? 'rows-as-groups' : this.settings.orientation,
         excludeTotals: this.settings.excludeTotals,
         alignSquare: SQUARE_CHARTS.has(this.currentChartId),
       });
@@ -525,8 +525,8 @@
     }
 
     updateStyleVisibility() {
-      document.querySelectorAll('[data-chart-style]').forEach((node) => {
-        const ids = node.getAttribute('data-chart-style').split(/\s+/);
+      document.querySelectorAll('[data-chart-style], [data-chart-for]').forEach((node) => {
+        const ids = (node.getAttribute('data-chart-for') || node.getAttribute('data-chart-style') || '').split(/\s+/);
         node.hidden = !ids.includes(this.currentChartId) && !ids.includes('all');
       });
     }
@@ -592,6 +592,7 @@
       }
       if (orientation) orientation.value = this.settings.orientation;
       if (totals) totals.checked = this.settings.excludeTotals !== false;
+      this.updateStyleVisibility();
       this.updateSquareWarning();
     }
 
@@ -744,6 +745,9 @@
       if (!controls) return;
       const html = typeof mod.controlsHTML === 'function' ? mod.controlsHTML(this.lang) : (mod.controlsHTML || '');
       controls.innerHTML = html;
+      controls.style.visibility = '';
+      controls.style.pointerEvents = '';
+      controls.hidden = !html.trim();
       if (typeof mod.bindControls === 'function') mod.bindControls();
     }
 

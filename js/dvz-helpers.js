@@ -62,7 +62,7 @@
       styleStackedMode: '積み上げ方式',
       styleStackedPercent: '100%',
       styleStackedAbsolute: '実数',
-      styleDiverging: '発散カラー',
+      styleCenterAtZero: '0を中心に配色',
       styleSplomAxes: 'SPLOM軸',
       annotateTitle: 'タイトル',
       annotateTitlePlaceholder: 'チャートタイトル',
@@ -107,7 +107,7 @@
       styleStackedMode: 'Stacked mode',
       styleStackedPercent: '100%',
       styleStackedAbsolute: 'Absolute',
-      styleDiverging: 'Diverging colors',
+      styleCenterAtZero: 'Center colors at 0',
       styleSplomAxes: 'SPLOM axes',
       annotateTitle: 'Title',
       annotateTitlePlaceholder: 'Chart title',
@@ -301,7 +301,7 @@
     }).format(value);
   }
 
-  function colorInterpolator(scheme, diverging) {
+  function colorInterpolator(scheme) {
     const map = {
       blues: d3.interpolateBlues,
       oranges: d3.interpolateOranges,
@@ -311,7 +311,6 @@
       inferno: d3.interpolateInferno,
       rdylbu: d3.interpolateRdYlBu,
     };
-    if (diverging) return d3.interpolateRdYlBu;
     return map[scheme] || d3.interpolateBlues;
   }
 
@@ -320,7 +319,7 @@
       const palette = d3.schemeTableau10;
       return d3.range(count).map((i) => palette[i % palette.length]);
     }
-    const interp = colorInterpolator(scheme, false);
+    const interp = colorInterpolator(scheme);
     return d3.range(count).map((i) => interp(count === 1 ? 0.65 : 0.2 + (0.7 * i) / (count - 1)));
   }
 

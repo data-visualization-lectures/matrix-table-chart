@@ -141,7 +141,7 @@
               <p class="mb-2 text-[11px] font-bold uppercase tracking-wide text-gray-400" data-i18n="mapValueColumns">値の列</p>
               <div id="map-value-columns" class="flex flex-col gap-2 text-sm"></div>
             </section>
-            <section class="border-b border-gray-100 px-5 py-4">
+            <section class="border-b border-gray-100 px-5 py-4" data-chart-for="heatmap mosaic stacked-bar parallel-coordinates scatterplot-matrix">
               <label for="map-orientation" class="mb-2 block text-[11px] font-bold uppercase tracking-wide text-gray-400" data-i18n="mapOrientation">向き</label>
               <select id="map-orientation" class="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm">
                 <option value="rows-as-groups" data-i18n="mapRowsAsGroups">行をグループに</option>
@@ -170,7 +170,7 @@
                 <option value="tableau">Tableau</option>
               </select>
             </section>
-            <section class="border-b border-gray-100 px-5 py-4">
+            <section class="border-b border-gray-100 px-5 py-4" data-chart-for="heatmap mosaic stacked-bar">
               <label class="dvz-check text-sm"><input id="style-show-values" type="checkbox"><span data-i18n="styleShowValues">値を表示</span></label>
             </section>
             <section class="border-b border-gray-100 px-5 py-4" data-chart-style="stacked-bar">
@@ -181,7 +181,7 @@
               </select>
             </section>
             <section class="border-b border-gray-100 px-5 py-4" data-chart-style="heatmap">
-              <label class="dvz-check text-sm"><input id="style-heatmap-diverging" type="checkbox"><span data-i18n="styleDiverging">発散カラー</span></label>
+              <label class="dvz-check text-sm"><input id="style-heatmap-diverging" type="checkbox"><span data-i18n="styleCenterAtZero">0を中心に配色</span></label>
             </section>
             <section class="px-5 py-4" data-chart-style="scatterplot-matrix">
               <label for="style-splom-max" class="mb-2 block text-[11px] font-bold uppercase tracking-wide text-gray-400" data-i18n="styleSplomAxes">SPLOM軸</label>
@@ -243,17 +243,17 @@
   <script src="https://id.data-viz-lectures.com/lib/settings-compat.v1.js"></script>
   <script src="js/matrix-model.js?v=2"></script>
   <script src="js/settings-spec.js"></script>
-  <script src="js/dvz-helpers.js?v=4"></script>
+  <script src="js/dvz-helpers.js?v=5"></script>
   <script src="js/chart-registry.js?v=3"></script>
-  <script src="js/modules/heatmap.js?v=3"></script>
+  <script src="js/modules/heatmap.js?v=5"></script>
   <script src="js/modules/mosaic.js"></script>
   <script src="js/modules/stacked-bar.js"></script>
-  <script src="js/modules/parallel-coordinates.js?v=2"></script>
-  <script src="js/modules/scatterplot-matrix.js"></script>
+  <script src="js/modules/parallel-coordinates.js?v=5"></script>
+  <script src="js/modules/scatterplot-matrix.js?v=4"></script>
   <script src="js/modules/chord.js"></script>
-  <script src="js/modules/adjacency-matrix.js?v=2"></script>
-  <script src="js/sample-catalog.js?v=2"></script>
-  <script src="js/core/runtime.js?v=11"></script>
+  <script src="js/modules/adjacency-matrix.js?v=4"></script>
+  <script src="js/sample-catalog.js?v=5"></script>
+  <script src="js/core/runtime.js?v=14"></script>
   <script src="js/app.js?v=2"></script>
 </body>
 </html>

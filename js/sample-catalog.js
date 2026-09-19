@@ -2,16 +2,19 @@
   'use strict';
 
   const APP_NAME = 'matrix-table-chart';
-  const CHART_IDS = [
+  const RECT_CHARTS = [
     'heatmap',
-    'adjacency-matrix',
     'mosaic',
     'stacked-bar',
     'parallel-coordinates',
     'scatterplot-matrix',
-    'chord',
   ];
-  const TOOL_TOKENS = [APP_NAME].concat(CHART_IDS.map((id) => APP_NAME + '/' + id));
+  const SQUARE_CHARTS = ['adjacency-matrix', 'chord'];
+
+  function chartTokens(entry) {
+    const charts = entry.square ? RECT_CHARTS.concat(SQUARE_CHARTS) : RECT_CHARTS;
+    return [APP_NAME].concat(charts.map((id) => APP_NAME + '/' + id));
+  }
   const SAMPLE_FILES = {
     'ad-spend-by-industry': {
       ja: 'samples/ad-spend-by-industry.csv',
@@ -88,6 +91,7 @@
     {
       id: 'mtc-od-migration',
       sampleId: 'od-migration',
+      square: true,
       name: '都市間移動',
       nameEn: 'City-to-city movement',
       description: '出発地と到着地が同じ正方形の移動行列。',
@@ -104,6 +108,7 @@
     {
       id: 'mtc-les-miserables',
       sampleId: 'les-miserables',
+      square: true,
       name: 'レ・ミゼラブル登場人物の共起',
       nameEn: 'Les Misérables character co-occurrence',
       description: '登場人物の章共起を正方形行列にしたもの。group 列はクラスタ。',
@@ -145,7 +150,7 @@
       fileUrl: resolveFileUrl(files.ja),
       fileUrlEn: resolveFileUrl(files.en),
       thumbnailUrl: null,
-      compatibleTools: TOOL_TOKENS.slice(),
+      compatibleTools: chartTokens(entry),
       category: 'tabular',
       dataAsOf: entry.dataAsOf || null,
       source: entry.source || '',
@@ -168,6 +173,12 @@
         : '',
       sourceUrl: entry?.sourceUrl || '',
     };
+  }
+
+  function entryMatchesTool(entry, toolId, chartKey) {
+    const tools = entry.compatibleTools || [];
+    if (chartKey) return tools.includes(`${toolId}/${chartKey}`);
+    return tools.some((token) => token === toolId || String(token).startsWith(`${toolId}/`));
   }
 
   function mergeEntries(existing, extra) {
@@ -197,10 +208,18 @@
         const result = await originalOpen.apply(this, args);
         const localEntries = getLocalEntries();
         if (localEntries.length) {
-          this._entries = mergeEntries(this._entries || [], localEntries);
+          const app = root.matrixTableApp;
+          const toolId = this._toolId || app?.config?.appName || APP_NAME;
+          const chartKey = this._chartKey || app?.currentChartId || null;
+          const localById = new Map(localEntries.map((entry) => [entry.id, entry]));
+          const merged = mergeEntries(this._entries || [], localEntries).map((entry) => {
+            const local = localById.get(entry.id);
+            return local ? { ...entry, compatibleTools: local.compatibleTools } : entry;
+          });
+          this._entries = merged.filter((entry) => entryMatchesTool(entry, toolId, chartKey));
           this._filteredEntries = this._entries;
-          if (typeof this._renderList === 'function') this._renderList();
-          else if (typeof this._renderModal === 'function') this._renderModal();
+          if (typeof this._renderModal === 'function') this._renderModal();
+          else if (typeof this._renderList === 'function') this._renderList();
         }
         return result;
       };

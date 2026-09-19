@@ -103,7 +103,11 @@
         });
         const controls = document.getElementById('dvz-controls');
         if (controls) {
-          controls.innerHTML = typeof mod.controlsHTML === 'function' ? mod.controlsHTML(LANG) : (mod.controlsHTML || '');
+          const html = typeof mod.controlsHTML === 'function' ? mod.controlsHTML(LANG) : (mod.controlsHTML || '');
+          controls.innerHTML = html;
+          controls.style.visibility = '';
+          controls.style.pointerEvents = '';
+          controls.hidden = !html.trim();
           mod.bindControls?.();
         }
       };
