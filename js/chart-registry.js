@@ -73,7 +73,7 @@ const CHART_REGISTRY = [
       en: 'Show flows in a square origin-destination matrix.',
     },
     category: { ja: '流れ', en: 'Flow' },
-    thumbnail: 'thumbnails/chord.svg',
+    thumbnail: 'thumbnails/chord.svg?v=2',
     sample: 'od-migration',
   },
 ];
