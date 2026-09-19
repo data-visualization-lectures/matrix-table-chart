@@ -215,6 +215,38 @@
     return null;
   }
 
+  function escapeHtmlAttr(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function buildPublicSharePageUrl(shareId) {
+    return `${TOOL_CONFIG.publicShareOrigin}/share.html?id=${encodeURIComponent(shareId)}`;
+  }
+
+  function buildIframeEmbedCode(shareId, rawTitle) {
+    const src = `${buildPublicSharePageUrl(shareId)}&embed=1`;
+    const base = String(rawTitle || '').trim();
+    const title = escapeHtmlAttr(base ? `${base} - ${TOOL_CONFIG.title}` : TOOL_CONFIG.title);
+    const style = [
+      'display:block',
+      'width:100%',
+      'max-width:100%',
+      'height:auto',
+      'aspect-ratio:16/10',
+      'border:0',
+      'margin:0 auto',
+      'padding:0',
+      'overflow:hidden',
+      'max-height:calc(100vh - 24px)',
+      'max-height:calc(100dvh - 24px)',
+    ].join(';');
+    return `<iframe title="${title}" src="${src}" frameborder="0" scrolling="auto" allow="fullscreen; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" loading="lazy" allowfullscreen="true" style="${style}"></iframe>`;
+  }
+
   async function dvzPublishShareFromProject(options = {}) {
     const projectId = String(options.projectId || '').trim();
     if (!projectId) {
@@ -457,6 +489,8 @@
     dvzShowProcessingToast,
     dvzInstallHeaderProcessingToasts,
     dvzPublishShareFromProject,
+    buildPublicSharePageUrl,
+    buildIframeEmbedCode,
     parseTableText,
     dvzInitFileUpload,
     formatNumber,

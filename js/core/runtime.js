@@ -874,9 +874,11 @@
       });
       const shareId = result.shareId || result.id;
       if (!shareId) throw new Error('No share ID returned');
+      const shareTitle = title || this.settings.annotateTitle || this.currentProjectName || this.config.title;
       return {
         shareId,
-        shareUrl: `${this.config.publicShareOrigin}/share.html?id=${encodeURIComponent(shareId)}`,
+        shareUrl: H().buildPublicSharePageUrl(shareId),
+        iframeCode: H().buildIframeEmbedCode(shareId, shareTitle),
       };
     }
 
