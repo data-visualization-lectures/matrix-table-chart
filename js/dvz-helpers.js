@@ -378,6 +378,91 @@
       .style('paint-order', 'stroke');
   }
 
+  function paintIsVisible(value) {
+    const text = String(value || '').trim();
+    return text !== '' && text !== 'none' && text !== 'transparent';
+  }
+
+  function strokeDrawnBeforeFill(order) {
+    const tokens = String(order || '').trim().split(/\s+/).filter(Boolean);
+    if (!tokens.length || tokens[0] === 'normal') return false;
+    const strokeAt = tokens.indexOf('stroke');
+    const fillAt = tokens.indexOf('fill');
+    if (strokeAt < 0) return false;
+    if (fillAt < 0) return true;
+    return strokeAt < fillAt;
+  }
+
+  function isOutlinedExportText(el, style) {
+    const order = style.getPropertyValue('paint-order') || el.getAttribute('paint-order') || '';
+    if (!strokeDrawnBeforeFill(order)) return false;
+    const strokeWidth = parseFloat(style.getPropertyValue('stroke-width'));
+    const strokeOpacity = parseFloat(style.getPropertyValue('stroke-opacity') || '1');
+    return paintIsVisible(style.getPropertyValue('fill'))
+      && paintIsVisible(style.getPropertyValue('stroke'))
+      && strokeWidth > 0
+      && strokeOpacity !== 0;
+  }
+
+  function setExportPaint(el, name, value) {
+    el.style.setProperty(name, value);
+    el.setAttribute(name, value);
+  }
+
+  function clearExportPaintOrder(el) {
+    el.style.removeProperty('paint-order');
+    el.removeAttribute('paint-order');
+  }
+
+  function collectExportTextPairs(src, clone, pairs) {
+    if (!src || !clone || src.nodeType !== 1 || clone.nodeType !== 1) return;
+    if (src.localName === 'text') {
+      pairs.push([src, clone]);
+      return;
+    }
+    const count = Math.min(src.children.length, clone.children.length);
+    for (let i = 0; i < count; i += 1) {
+      collectExportTextPairs(src.children[i], clone.children[i], pairs);
+    }
+  }
+
+  // Illustrator ignores paint-order, so outlined labels are split only on the export clone.
+  function splitOutlinedTextForExport(srcRoot, cloneRoot) {
+    const pairs = [];
+    collectExportTextPairs(srcRoot, cloneRoot, pairs);
+    pairs.forEach(([src, clone]) => {
+      if (!clone.parentNode || typeof window.getComputedStyle !== 'function') return;
+      const style = window.getComputedStyle(src);
+      if (!isOutlinedExportText(src, style)) return;
+
+      const strokeEl = clone.cloneNode(true);
+      const fillEl = clone.cloneNode(true);
+      clearExportPaintOrder(strokeEl);
+      clearExportPaintOrder(fillEl);
+
+      setExportPaint(strokeEl, 'fill', 'none');
+      setExportPaint(strokeEl, 'stroke', style.getPropertyValue('stroke'));
+      setExportPaint(strokeEl, 'stroke-width', style.getPropertyValue('stroke-width'));
+      setExportPaint(strokeEl, 'stroke-linejoin', style.getPropertyValue('stroke-linejoin') || 'round');
+      const strokeOpacity = style.getPropertyValue('stroke-opacity');
+      if (strokeOpacity) setExportPaint(strokeEl, 'stroke-opacity', strokeOpacity);
+
+      setExportPaint(fillEl, 'fill', style.getPropertyValue('fill'));
+      setExportPaint(fillEl, 'stroke', 'none');
+      fillEl.style.removeProperty('stroke-width');
+      fillEl.removeAttribute('stroke-width');
+
+      clone.replaceWith(strokeEl);
+      strokeEl.after(fillEl);
+    });
+  }
+
+  function cloneChartSvg(svg) {
+    const clone = svg.cloneNode(true);
+    splitOutlinedTextForExport(svg, clone);
+    return clone;
+  }
+
   function measureContainer(container) {
     const rect = container.getBoundingClientRect();
     return {
@@ -401,7 +486,7 @@
   async function exportSvg(filename) {
     const svg = document.querySelector('#chart-container svg');
     if (!svg) throw new Error('No chart');
-    const clone = svg.cloneNode(true);
+    const clone = cloneChartSvg(svg);
     clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     const blob = new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' });
     downloadBlob(blob, `${filename}.svg`);
@@ -410,7 +495,7 @@
   async function exportPng(filename) {
     const svg = document.querySelector('#chart-container svg');
     if (!svg) throw new Error('No chart');
-    const clone = svg.cloneNode(true);
+    const clone = cloneChartSvg(svg);
     const width = svg.viewBox.baseVal.width || svg.clientWidth || 800;
     const height = svg.viewBox.baseVal.height || svg.clientHeight || 600;
     clone.setAttribute('width', String(width));
@@ -451,7 +536,7 @@
   async function generateThumbnail() {
     const svg = document.querySelector('#chart-container svg');
     if (!svg) return null;
-    const clone = svg.cloneNode(true);
+    const clone = cloneChartSvg(svg);
     const width = svg.viewBox.baseVal.width || 800;
     const height = svg.viewBox.baseVal.height || 600;
     clone.setAttribute('width', '640');
