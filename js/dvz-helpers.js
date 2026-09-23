@@ -374,7 +374,12 @@
       .attr('fill', '#111827')
       .attr('stroke', '#ffffff')
       .attr('stroke-width', 3)
+      .attr('stroke-linejoin', 'round')
       .attr('paint-order', 'stroke')
+      .style('fill', '#111827')
+      .style('stroke', '#ffffff')
+      .style('stroke-width', '3px')
+      .style('stroke-linejoin', 'round')
       .style('paint-order', 'stroke');
   }
 
