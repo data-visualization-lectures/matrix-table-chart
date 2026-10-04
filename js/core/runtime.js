@@ -41,6 +41,8 @@
       this.currentProjectName = null;
       this.hasLoadedProject = false;
       this.projectLoadStarted = false;
+      this.headerReady = false;
+      this.routeProjectLoad = null;
       this.lastSavedSerialized = null;
       this.resizeObserver = null;
       this.animateNext = false;
@@ -68,7 +70,8 @@
         const chart = params.get('chart');
         if (projectId) {
           this.projectLoadStarted = true;
-          this.header?.loadProject?.(projectId);
+          // Before the header is ready, setupHeader() restores from location.search.
+          if (this.headerReady) void this.restoreProjectFromRoute(this.header, projectId);
           return;
         }
         if (chart && this.getRegistryEntry(chart)) {
@@ -83,8 +86,8 @@
       const chart = params.get('chart');
       const dataUrl = params.get('data_url');
       if (projectId) {
+        // The project is restored once the header is ready (setupHeader).
         this.projectLoadStarted = true;
-        this.header?.loadProject?.(projectId);
         return;
       }
       if (chart && this.getRegistryEntry(chart)) {
@@ -331,6 +334,7 @@
       });
 
       waitReady().then(() => {
+        this.headerReady = true;
         this.applyHeaderButtons();
         if (typeof header.setProjectConfig === 'function') {
           header.setProjectConfig({
@@ -356,8 +360,41 @@
         }
         this.setupSampleConfig();
         const projectId = new URLSearchParams(location.search).get('projectId');
-        if (projectId && header.loadProject) header.loadProject(projectId);
+        if (projectId) void this.restoreProjectFromRoute(header, projectId);
       });
+    }
+
+    // ?projectId= launch (e.g. from the app.dataviz.jp project list).
+    // header.loadProject() returns the saved data and does NOT call onProjectLoad,
+    // so the restore is done here with the returned data.
+    async restoreProjectFromRoute(header, projectId) {
+      if (this.routeProjectLoad) return this.routeProjectLoad;
+      this.routeProjectLoad = (async () => {
+        if (typeof header?.loadProject !== 'function') {
+          H().dvzShowToast(H().t('プロジェクトを読み込めませんでした', 'Could not load the project'), 'error');
+          return;
+        }
+        try {
+          const data = await header.loadProject(projectId);
+          if (!data) {
+            H().dvzShowToast(H().t('プロジェクトが見つかりません', 'Project not found'), 'error');
+            return;
+          }
+          const context = typeof header.getProjectContext === 'function' ? header.getProjectContext() : {};
+          await this.onProjectLoad(data, {
+            id: projectId,
+            name: context.projectName || null,
+            isGroupProject: context.sourceType === 'group-project',
+          });
+        } catch (error) {
+          console.error('[matrix-table-chart] project route restore failed', error);
+        }
+      })();
+      try {
+        await this.routeProjectLoad;
+      } finally {
+        this.routeProjectLoad = null;
+      }
     }
 
     applyHeaderButtons() {
