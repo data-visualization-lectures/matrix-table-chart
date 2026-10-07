@@ -352,6 +352,8 @@ body[data-dvz-tool-header="hidden"] dataviz-tool-header {
 #dvz-chart > #chart-area     { grid-row: 3; }
 #dvz-chart > #dvz-controls   { grid-row: 4; }
 #dvz-chart > #chart-source   { grid-row: 5; }
+#chart-source a { color: #9ca3af; text-decoration: underline; text-underline-offset: 2px; }
+#chart-source a:hover { text-decoration: none; }
 
 #chart-switcher {
   display: flex;
