@@ -765,17 +765,19 @@
         if (sourceEl) {
           sourceEl.textContent = '';
           if (source) {
+            const sourceBody = source.replace(/^(?:出典[:：]|Source:)\s*/i, '');
+            const sourcePrefix = this.lang === 'en' ? 'Source: ' : '出典: ';
             const url = this.settings.annotateSourceUrl;
+            sourceEl.appendChild(document.createTextNode(sourcePrefix));
             if (url) {
-              sourceEl.appendChild(document.createTextNode('Source: '));
               const link = document.createElement('a');
               link.href = url;
               link.target = '_blank';
               link.rel = 'noopener';
-              link.textContent = source;
+              link.textContent = sourceBody;
               sourceEl.appendChild(link);
             } else {
-              sourceEl.appendChild(document.createTextNode(source));
+              sourceEl.appendChild(document.createTextNode(sourceBody));
             }
           }
         }

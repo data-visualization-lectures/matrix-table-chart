@@ -37,16 +37,17 @@
     document.getElementById('chart-title').textContent = title || '';
     sourceEl.textContent = '';
     if (!source) return;
-    sourceEl.appendChild(document.createTextNode('Source: '));
+    const sourceBody = String(source).replace(/^(?:出典[:：]|Source:)\s*/i, '');
+    sourceEl.appendChild(document.createTextNode(LANG === 'ja' ? '出典: ' : 'Source: '));
     if (!sourceUrl) {
-      sourceEl.appendChild(document.createTextNode(source));
+      sourceEl.appendChild(document.createTextNode(sourceBody));
       return;
     }
     const link = document.createElement('a');
     link.href = sourceUrl;
     link.target = '_blank';
     link.rel = 'noopener';
-    link.textContent = source;
+    link.textContent = sourceBody;
     sourceEl.appendChild(link);
   }
 
