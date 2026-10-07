@@ -134,15 +134,15 @@
 
     bindStaticUi() {
       document.getElementById('chart-back-btn')?.addEventListener('click', () => this.goBackToSelector());
-      document.getElementById('annotate-apply-btn')?.addEventListener('click', () => {
-        this.readAnnotateFromDom();
-        this.renderChart(false);
-      });
-      ['annotate-title', 'annotate-source', 'annotate-source-url', 'legend-position'].forEach((id) => {
-        document.getElementById(id)?.addEventListener('change', () => {
+      ['annotate-title', 'annotate-source', 'annotate-source-url'].forEach((id) => {
+        document.getElementById(id)?.addEventListener('input', () => {
           this.readAnnotateFromDom();
           this.renderChart(false);
         });
+      });
+      document.getElementById('legend-position')?.addEventListener('change', () => {
+        this.readAnnotateFromDom();
+        this.renderChart(false);
       });
       document.getElementById('export-svg-btn')?.addEventListener('click', async () => {
         H().dvzShowProcessingToast(H().t('書き出し中です', 'Exporting'));
